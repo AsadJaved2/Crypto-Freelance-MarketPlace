@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelance Marketplace</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./src/css/styles.css"> 
+    <style>
+        body {
+            background-color: #f8f9fa; /* Light background color */
+        }
+        h1 {
+            color: #343a40; /* Dark color for heading */
+        }
+        .btn-custom {
+            padding: 15px 30px; /* Bigger button */
+            font-size: 1.2rem; /* Bigger font */
+            border-radius: 25px; /* Rounded buttons */
+            transition: all 0.3s; /* Smooth transition */
+        }
+        .btn-custom:hover {
+            background-color: #007bff; /* Primary color on hover */
+            color: white; /* White text on hover */
+            transform: scale(1.05); /* Scale effect on hover */
+        }
+        .hero-section {
+            background-image: url('https://images.unsplash.com/photo-1497466767033-637a4a4a38f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDJ8fGZyZWVsYW5jZXxlbnwwfHx8fDE2Mzg2MTM3OTY&ixlib=rb-4.0.3&q=80&w=1080'); /* Background image */
+            background-size: cover; /* Cover image */
+            background-position: center; /* Center image */
+            height: 300px; /* Height for hero section */
+            display: flex; /* Flexbox for centering */
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+            color: white; /* White text */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Text shadow for readability */
+            margin-bottom: 40px; /* Space below hero section */
+        }
+        .btn-wrapper {
+            margin-top: 20px; /* Space above button container */
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="container mt-5">
+        <div class="hero-section">
+            <h1 class="text-center">Welcome to Freelance Marketplace</h1>
+        </div>
+        <div class="text-center btn-wrapper">
+            <button class="btn btn-secondary btn-custom" id="buyerBtn">Become A Buyer</button>
+            <button class="btn btn-secondary btn-custom" id="sellerBtn">Become A Seller</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+    <script type="module">
+        document.getElementById("buyerBtn").onclick = () => window.location.href = './buyer.html';
+        document.getElementById("sellerBtn").onclick = () => window.location.href = './seller.html';
+    </script>
+</class=>
+</html>
