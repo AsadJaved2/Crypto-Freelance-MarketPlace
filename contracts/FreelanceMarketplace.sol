@@ -7,6 +7,7 @@ contract FreelanceMarketplace {
         string description;
         uint256 payment;
         address payable freelancer;
+        address payable creator; // Job creator's address
         bool isComplete;
     }
 
@@ -19,8 +20,8 @@ contract FreelanceMarketplace {
 
     event JobCreated(uint256 jobId, string title, uint256 payment);
     event JobCompleted(uint256 jobId, address freelancer);
+    event JobApplied(uint256 jobId, address freelancer);
 
-event JobApplied(uint256 jobId, address freelancer);
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
         _;
@@ -32,6 +33,7 @@ event JobApplied(uint256 jobId, address freelancer);
             description: _description,
             payment: _payment,
             freelancer: payable(address(0)),
+            creator: payable(msg.sender), // Set creator
             isComplete: false
         });
 
@@ -39,18 +41,17 @@ event JobApplied(uint256 jobId, address freelancer);
         emit JobCreated(jobs.length - 1, _title, _payment);
     }
 
-     function applyForJob(uint256 _jobId) public payable {
+    function applyForJob(uint256 _jobId) public {
+        Job storage job = jobs[_jobId];
 
-    Job storage job = jobs[_jobId];
+        require(job.freelancer == address(0), "Job already taken"); // Check if job is taken
 
-   // require(job.isActive, "Job is not active");
-    require(job.freelancer == address(0), "Job already taken"); // Check if job is taken
-    require(msg.value == job.payment, "Incorrect payment amount"); // Check payment
+        // Transfer payment from the creator to the contract
+        job.creator.transfer(job.payment); // Send payment to the contract
 
-    job.freelancer = payable(msg.sender); // Assign freelancer
-    emit JobApplied(_jobId, msg.sender); // Emit event
-}
-
+        job.freelancer = payable(msg.sender); // Assign freelancer
+        emit JobApplied(_jobId, msg.sender); // Emit event
+    }
 
     function completeJob(uint256 _jobId) public {
         Job storage job = jobs[_jobId];
@@ -58,7 +59,7 @@ event JobApplied(uint256 jobId, address freelancer);
         require(!job.isComplete, "Job already completed");
 
         job.isComplete = true;
-        job.freelancer.transfer(job.payment);
+        job.freelancer.transfer(job.payment); // Transfer payment to freelancer
         emit JobCompleted(_jobId, msg.sender);
     }
 
