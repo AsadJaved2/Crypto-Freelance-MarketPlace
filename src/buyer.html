@@ -8,52 +8,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     />
-    <link rel="stylesheet" href="./css/styles.css" />
     <style>
-      body {
-        background-color: #f8f9fa; /* Light background color */
-      }
-      h1 {
-        color: #f8f9fa; /* Dark color for heading */
-      }
-      .card {
-        border-radius: 15px; /* Rounded corners for cards */
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Shadow for cards */
-      }
-      .card-title {
-        color: #007bff; /* Blue color for card titles */
-      }
-      .btn-primary {
-        background-color: #007bff; /* Primary button color */
-        border-color: #007bff; /* Primary button border color */
-      }
-      .btn-primary:hover {
-        background-color: #0056b3; /* Darker blue on hover */
-        border-color: #0056b3; /* Darker border on hover */
-      }
-      .logout-btn {
-        float: right; /* Align logout button to the right */
-        margin-bottom: 20px; /* Space below logout button */
-      }
-      .hero-section {
-        background-image: url("https://images.unsplash.com/photo-1529573252173-f6c7a04c8ed3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDI1fHxmcmVlbGFuY2V8ZW58MHx8fHwxNjgwNjIzNTU2&ixlib=rb-4.0.3&q=80&w=1080"); /* Background image */
-        background-size: cover; /* Cover image */
-        background-position: center; /* Center image */
-        height: 250px; /* Height for hero section */
-        display: flex; /* Flexbox for centering */
-        align-items: center; /* Center vertically */
-        justify-content: center; /* Center horizontally */
-        color: white; /* White text */
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Text shadow for readability */
-        border-radius: 15px; /* Rounded corners for hero section */
-        margin-bottom: 30px; /* Space below hero section */
-      }
-      .hero-text {
-        text-align: center;
-        padding: 20px;
-        background-color: #198754;
-        border-radius: 15px; /* Rounded corners for hero text */
-      }
+      /* ... (keep existing styles) ... */
     </style>
   </head>
 
@@ -68,7 +24,6 @@
       <button class="btn btn-danger mb-3 logout-btn" id="logoutBtn">
         Logout
       </button>
-      <!-- Logout Button -->
 
       <div class="row">
         <div class="col-md-5">
@@ -90,13 +45,12 @@
                   <label for="jobDescription" class="form-label"
                     >Project Description</label
                   >
-                  <input
-                    type="text"
+                  <textarea
                     class="form-control"
                     id="jobDescription"
                     placeholder="Enter job description"
                     required
-                  />
+                  ></textarea>
                 </div>
                 <div class="mb-3">
                   <label for="jobPayment" class="form-label"
@@ -112,10 +66,18 @@
                     step="0.01"
                   />
                 </div>
-                <button type="submit" class="btn btn-primary" id="createJobBtn">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  id="createJobBtn"
+                >
                   Create Job
                 </button>
+                <div class="spinner-border text-primary mt-3" id="loadingSpinner" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
               </form>
+              <div id="feedbackMessage" class="mt-3"></div>
             </div>
           </div>
         </div>
@@ -128,7 +90,6 @@
               the field. Manage your project effortlessly and securely through
               our platform.
             </p>
-            
           </div>
         </div>
       </div>
@@ -145,8 +106,7 @@
               await window.ethereum.request({ method: "eth_requestAccounts" });
               const web3 = new Web3(window.ethereum);
 
-              const contractAddress =
-                "0xe36580FB8091B844BFb6EDf89F979e20aE6Bc2FB"; // Your contract address
+              const contractAddress = "0x145D90F85212714b94c214109141Ac02E36cD662"; // Your contract address
               const response = await fetch("./FreelanceMarketplace.json");
 
               if (!response.ok) {
@@ -161,12 +121,19 @@
               document
                 .getElementById("jobForm")
                 .addEventListener("submit", async (event) => {
-                  event.preventDefault(); // Prevent form submission
+                  event.preventDefault();
 
                   const title = document.getElementById("jobTitle").value;
-                  const description =
-                    document.getElementById("jobDescription").value;
+                  const description = document.getElementById("jobDescription").value;
                   const payment = document.getElementById("jobPayment").value;
+
+                  const feedback = document.getElementById("feedbackMessage");
+                  const spinner = document.getElementById("loadingSpinner");
+
+                  if (title.trim() === "" || description.trim() === "") {
+                    feedback.innerHTML = `<div class="alert alert-danger">Please fill in all fields</div>`;
+                    return;
+                  }
 
                   const accounts = await window.ethereum.request({
                     method: "eth_requestAccounts",
@@ -174,25 +141,32 @@
                   const paymentInWei = web3.utils.toWei(payment, "ether");
 
                   try {
+                    spinner.style.display = "block";
+
+                    console.log("Creating job with title:", title);
+                    console.log("Description:", description);
+                    console.log("Payment in Wei:", paymentInWei);
+
                     await contract.methods
-                      .createJob(title, description, paymentInWei)
+                      .createJob(title, description)
                       .send({
                         from: accounts[0],
-                        gas: 3000000,
+                        value: paymentInWei,
+                        gas: 500000,
                       });
 
-                    alert("Job created!");
-                    // Reset the form fields
+                    feedback.innerHTML = `<div class="alert alert-success">Job created successfully!</div>`;
                     document.getElementById("jobForm").reset();
                   } catch (error) {
                     console.error("Error creating job:", error);
-                    alert("Error creating job: " + error.message);
+                    feedback.innerHTML = `<div class="alert alert-danger">Error creating job: ${error.message}</div>`;
+                  } finally {
+                    spinner.style.display = "none";
                   }
                 });
 
               // Logout button functionality
               document.getElementById("logoutBtn").onclick = () => {
-                // Redirect to the login page or home page
                 window.location.href = "index.html";
               };
             } catch (error) {

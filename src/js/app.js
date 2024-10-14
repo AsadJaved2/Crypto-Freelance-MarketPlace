@@ -1,9 +1,6 @@
-
-
 import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
-import JobCard from './components/JobCard'; // Assuming you have a JobCard component
-import './styles.css';
+import JobCard from './JobCard.js'; 
 import FreelanceMarketplace from './contracts/FreelanceMarketplace.json';
 
 const App = () => {
@@ -13,6 +10,8 @@ const App = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [payment, setPayment] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(''); // State for error messages
 
     useEffect(() => {
         const initWeb3 = async () => {
@@ -39,80 +38,75 @@ const App = () => {
     }, []);
 
     const loadJobs = async (contract) => {
-        const jobCount = await contract.methods.jobCount().call();
-        const jobsArray = [];
-        for (let i = 0; i < jobCount; i++) {
-            const job = await contract.methods.jobs(i).call();
-            jobsArray.push({ ...job, id: i });
+        setLoading(true); 
+        try {
+            const jobCount = await contract.methods.jobCount().call();
+            const jobsArray = [];
+            for (let i = 0; i < jobCount; i++) {
+                const job = await contract.methods.jobs(i).call();
+                jobsArray.push({ ...job, id: i });
+            }
+            setJobs(jobsArray);
+        } catch (error) {
+            console.error('Error loading jobs:', error);
+        } finally {
+            setLoading(false); 
         }
-        setJobs(jobsArray);
     };
 
     const createJob = async () => {
-        await contract.methods.createJob(title, description, Web3.utils.toWei(payment, 'ether')).send({ from: account });
-        loadJobs(contract);
-        setTitle('');
-        setDescription('');
-        setPayment('');
-    };
+        if (!title || !description || !payment || parseFloat(payment) <= 0) {
+            alert("Please fill out all fields and ensure payment is greater than 0");
+            return;
+        }
 
-    const applyForJob = async (jobId) => {
-        await contract.methods.applyForJob(jobId).send({ from: account });
-        loadJobs(contract);
-    };
-
-    const completeJob = async (jobId) => {
-        await contract.methods.completeJob(jobId).send({ from: account });
-        loadJobs(contract);
+        try {
+            await contract.methods.createJob(title, description, Web3.utils.toWei(payment, 'ether')).send({ from: account });
+            loadJobs(contract);
+            setTitle('');
+            setDescription('');
+            setPayment('');
+        } catch (error) {
+            console.error('Error creating job:', error);
+            setError('Error creating job. Please try again.'); // Set error message
+        }
     };
 
     return (
         <div className="container">
             <h1>Freelance Marketplace</h1>
-            <input
-                type="text"
-                placeholder="Job Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-            />
-            <input
-                type="text"
-                placeholder="Job Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-            />
-            <input
-                type="number"
-                placeholder="Payment (ETH)"
-                value={payment}
-                onChange={(e) => setPayment(e.target.value)}
-            />
-            <button onClick={createJob}>Create Job</button>
+            {error && <p className="error">{error}</p>} {/* Display error messages */}
+            <div className="job-creation-form">
+                <input
+                    type="text"
+                    placeholder="Job Title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                />
+                <input
+                    type="text"
+                    placeholder="Job Description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                />
+                <input
+                    type="number"
+                    placeholder="Payment (ETH)"
+                    value={payment}
+                    onChange={(e) => setPayment(e.target.value)}
+                />
+                <button onClick={createJob}>Create Job</button>
+            </div>
 
             <div className="job-list">
-                {jobs.map((job, index) => (
-                    <JobCard key={index} job={{ ...job, id: index + 1 }} />
-                ))}
+                {loading ? (
+                    <p>Loading jobs...</p>
+                ) : (
+                    jobs.map((job, index) => (
+                        <JobCard key={index} job={job} account={account} contract={contract} loadJobs={loadJobs} />
+                    ))
+                )}
             </div>
-        </div>
-    );
-};
-
-const JobCard = ({ job, applyForJob, completeJob }) => {
-    return (
-        <div className="job-card">
-            <h3>{job.title}</h3>
-            <p>{job.description}</p>
-            <p>{Web3.utils.fromWei(job.payment, 'ether')} ETH</p>
-            {job.freelancer === '0x0000000000000000000000000000000000000000' ? (
-                <button onClick={() => applyForJob(job.id)}>Apply for Job</button>
-            ) : job.freelancer === account ? (
-                <button onClick={() => completeJob(job.id)} disabled={job.isComplete}>
-                    {job.isComplete ? 'Job Completed' : 'Complete Job'}
-                </button>
-            ) : (
-                <p>Assigned to: {job.freelancer}</p>
-            )}
         </div>
     );
 };

@@ -7,68 +7,134 @@ contract FreelanceMarketplace {
         string description;
         uint256 payment;
         address payable freelancer;
-        address payable creator; // Job creator's address
+        address payable creator;
         bool isComplete;
+        bool isApproved;
+        bool isActive; // Track if the job is still active
     }
 
     Job[] public jobs;
     address public owner;
+    mapping(uint256 => uint256) public escrowBalances; // Track escrow balances for each job
 
     constructor() {
         owner = msg.sender;
     }
 
     event JobCreated(uint256 jobId, string title, uint256 payment);
-    event JobCompleted(uint256 jobId, address freelancer);
     event JobApplied(uint256 jobId, address freelancer);
+    event JobCompleted(uint256 jobId, address freelancer);
+    event JobApproved(uint256 jobId, address creator);
+    event JobCancelled(uint256 jobId, address creator, uint256 refundedAmount); // New event for job cancellation
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
         _;
     }
 
-    function createJob(string memory _title, string memory _description, uint256 _payment) public onlyOwner {
+    modifier onlyCreator(uint256 _jobId) {
+        require(msg.sender == jobs[_jobId].creator, "Only the job creator can call this function");
+        _;
+    }
+
+    modifier onlyFreelancer(uint256 _jobId) {
+        require(msg.sender == jobs[_jobId].freelancer, "Only assigned freelancer can call this function");
+        _;
+    }
+
+    function createJob(string memory _title, string memory _description) public payable {
+        require(msg.value > 0, "Payment must be greater than 0");
+        
         Job memory newJob = Job({
             title: _title,
             description: _description,
-            payment: _payment,
+            payment: msg.value,
             freelancer: payable(address(0)),
-            creator: payable(msg.sender), // Set creator
-            isComplete: false
+            creator: payable(msg.sender),
+            isComplete: false,
+            isApproved: false,
+            isActive: true
         });
 
         jobs.push(newJob);
-        emit JobCreated(jobs.length - 1, _title, _payment);
+        uint256 jobId = jobs.length - 1;
+        escrowBalances[jobId] = msg.value; // Store payment in escrow
+        
+        emit JobCreated(jobId, _title, msg.value);
     }
 
     function applyForJob(uint256 _jobId) public {
         Job storage job = jobs[_jobId];
+        
+        require(job.isActive, "Job is no longer active");
+        require(job.freelancer == address(0), "Job already taken");
+        require(msg.sender != job.creator, "Creator cannot apply for their own job");
 
-        require(job.freelancer == address(0), "Job already taken"); // Check if job is taken
-
-        // Transfer payment from the creator to the contract
-        job.creator.transfer(job.payment); // Send payment to the contract
-
-        job.freelancer = payable(msg.sender); // Assign freelancer
-        emit JobApplied(_jobId, msg.sender); // Emit event
+        job.freelancer = payable(msg.sender);
+        emit JobApplied(_jobId, msg.sender);
     }
 
-    function completeJob(uint256 _jobId) public {
+    function completeJob(uint256 _jobId) public onlyFreelancer(_jobId) {
         Job storage job = jobs[_jobId];
-        require(job.freelancer == msg.sender, "Only assigned freelancer can complete this job");
         require(!job.isComplete, "Job already completed");
 
         job.isComplete = true;
-        job.freelancer.transfer(job.payment); // Transfer payment to freelancer
         emit JobCompleted(_jobId, msg.sender);
+    }
+
+    function approveJob(uint256 _jobId) public onlyCreator(_jobId) {
+        Job storage job = jobs[_jobId];
+        require(job.isComplete, "Job is not yet complete");
+        require(!job.isApproved, "Job already approved");
+
+        job.isApproved = true;
+        uint256 payment = escrowBalances[_jobId];
+        escrowBalances[_jobId] = 0;
+        job.freelancer.transfer(payment); // Transfer payment from escrow to freelancer
+        emit JobApproved(_jobId, msg.sender);
+    }
+
+    function cancelJob(uint256 _jobId) public onlyCreator(_jobId) {
+        Job storage job = jobs[_jobId];
+        require(job.isActive, "Job is not active");
+        require(job.freelancer == address(0), "Cannot cancel job with assigned freelancer");
+
+        job.isActive = false;
+        uint256 payment = escrowBalances[_jobId];
+        escrowBalances[_jobId] = 0;
+        payable(msg.sender).transfer(payment); // Return payment from escrow to creator
+        emit JobCancelled(_jobId, msg.sender, payment); // Emit cancellation event
     }
 
     function jobCount() public view returns (uint256) {
         return jobs.length;
     }
 
-    function getJob(uint256 _jobId) public view returns (string memory, string memory, uint256, address, bool) {
+    function getJob(uint256 _jobId) public view returns (string memory, string memory, uint256, address, bool, bool, bool) {
         Job memory job = jobs[_jobId];
-        return (job.title, job.description, job.payment, job.freelancer, job.isComplete);
+        return (job.title, job.description, job.payment, job.freelancer, job.isComplete, job.isApproved, job.isActive);
+    }
+
+    function getAppliedJobs() public view returns (uint256[] memory) {
+        uint256 appliedJobCount = 0;
+        uint256 totalJobs = jobs.length;
+
+        for (uint256 i = 0; i < totalJobs; i++) {
+            if (jobs[i].freelancer == msg.sender) {
+                appliedJobCount++;
+            }
+        }
+
+        uint256[] memory appliedJobIDs = new uint256[](appliedJobCount);
+        uint256 index = 0;
+
+        for (uint256 i = 0; i < totalJobs; i++) {
+            if (jobs[i].freelancer == msg.sender) {
+                appliedJobIDs[index] = i;
+                index++;
+            }
+        }
+
+        return appliedJobIDs;
     }
 }
