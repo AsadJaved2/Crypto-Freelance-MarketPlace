@@ -61,7 +61,7 @@ const App = () => {
         }
 
         try {
-            await contract.methods.createJob(title, description, Web3.utils.toWei(payment, 'ether')).send({ from: account });
+            await contract.methods.createJob(title, description).send({ from: account, value: Web3.utils.toWei(payment, 'ether') });
             loadJobs(contract);
             setTitle('');
             setDescription('');
@@ -72,38 +72,56 @@ const App = () => {
         }
     };
 
+    const applyForJob = async (jobId) => {
+        try {
+            await contract.methods.applyForJob(jobId).send({ from: account });
+            loadJobs(contract);
+        } catch (error) {
+            console.error('Error applying for job:', error);
+            setError('Error applying for job. Please try again.');
+        }
+    };
+
+    const completeJob = async (jobId) => {
+        try {
+            await contract.methods.completeJob(jobId).send({ from: account });
+            loadJobs(contract);
+        } catch (error) {
+            console.error('Error completing job:', error);
+            setError('Error completing job. Please try again.');
+        }
+    };
+
+    const approveJob = async (jobId) => {
+        try {
+            await contract.methods.approveJob(jobId).send({ from: account });
+            loadJobs(contract);
+        } catch (error) {
+            console.error('Error approving job:', error);
+            setError('Error approving job. Please try again.');
+        }
+    };
+
     return (
         <div className="container">
             <h1>Freelance Marketplace</h1>
-            {error && <p className="error">{error}</p>} {/* Display error messages */}
-            <div className="job-creation-form">
-                <input
-                    type="text"
-                    placeholder="Job Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                />
-                <input
-                    type="text"
-                    placeholder="Job Description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                />
-                <input
-                    type="number"
-                    placeholder="Payment (ETH)"
-                    value={payment}
-                    onChange={(e) => setPayment(e.target.value)}
-                />
-                <button onClick={createJob}>Create Job</button>
-            </div>
-
+            {error && <p className="error">{error}</p>}
+            {/* Job creation form */}
             <div className="job-list">
                 {loading ? (
                     <p>Loading jobs...</p>
                 ) : (
-                    jobs.map((job, index) => (
-                        <JobCard key={index} job={job} account={account} contract={contract} loadJobs={loadJobs} />
+                    jobs.map((job) => (
+                        <JobCard 
+                            key={job.id} 
+                            job={job} 
+                            account={account} 
+                            contract={contract} 
+                            loadJobs={loadJobs} 
+                            onApply={applyForJob} 
+                            onComplete={completeJob} 
+                            onApprove={approveJob}
+                        />
                     ))
                 )}
             </div>

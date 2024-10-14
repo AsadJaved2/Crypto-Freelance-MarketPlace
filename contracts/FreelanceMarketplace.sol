@@ -114,6 +114,7 @@ contract FreelanceMarketplace {
         Job memory job = jobs[_jobId];
         return (job.title, job.description, job.payment, job.freelancer, job.isComplete, job.isApproved, job.isActive);
     }
+    
 
     function getAppliedJobs() public view returns (uint256[] memory) {
         uint256 appliedJobCount = 0;

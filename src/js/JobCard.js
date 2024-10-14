@@ -1,42 +1,41 @@
 import React from 'react';
-import Web3 from 'web3';
 
-const JobCard = ({ job, account, contract, loadJobs }) => {
-    const applyForJob = async (jobId) => {
-        try {
-            await contract.methods.applyForJob(jobId).send({ from: account });
-            loadJobs(contract); 
-        } catch (error) {
-            console.error("Error applying for job:", error);
-        }
+const JobCard = ({ job, account, contract, loadJobs, onApply, onComplete, onApprove }) => {
+    const isBuyer = account === job.buyer; // Check if the current account is the buyer
+    const isSeller = account === job.freelancer; // Check if the current account is the freelancer
+
+    const handleApply = () => {
+        onApply(job.id);
     };
 
-    const completeJob = async (jobId) => {
-        try {
-            await contract.methods.completeJob(jobId).send({ from: account });
-            loadJobs(contract);
-        } catch (error) {
-            console.error("Error completing job:", error);
-        }
+    const handleComplete = () => {
+        onComplete(job.id);
+    };
+
+    const handleApprove = () => {
+        onApprove(job.id);
     };
 
     return (
         <div className="job-card">
-            <h3>{job.title}</h3>
+            <h2>{job.title}</h2>
             <p>{job.description}</p>
-            <p>{Web3.utils.fromWei(job.payment, 'ether')} ETH</p>
-            {job.isActive ? (
-                job.freelancer === '0x0000000000000000000000000000000000000000' ? (
-                    <button onClick={() => applyForJob(job.id)}>Apply for Job</button>
-                ) : job.freelancer.toLowerCase() === account.toLowerCase() ? (
-                    <button onClick={() => completeJob(job.id)} disabled={job.isComplete}>
-                        {job.isComplete ? 'Job Completed' : 'Complete Job'}
-                    </button>
-                ) : (
-                    <p>Assigned to: {job.freelancer}</p>
-                )
-            ) : (
-                <p>This job is no longer active.</p>
+            <p>Payment: {Web3.utils.fromWei(job.payment.toString(), 'ether')} ETH</p>
+
+            {isBuyer && !job.completed && (
+                <button onClick={handleApprove}>Approve Job</button>
+            )}
+
+            {isSeller && !job.completed && (
+                <button onClick={handleComplete}>Complete Job</button>
+            )}
+
+            {job.applied && !job.completed && isSeller && (
+                <p>You have applied for this job.</p>
+            )}
+
+            {!job.applied && !job.completed && isSeller && (
+                <button onClick={handleApply}>Apply for Job</button>
             )}
         </div>
     );

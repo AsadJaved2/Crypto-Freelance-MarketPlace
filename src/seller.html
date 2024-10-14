@@ -168,19 +168,22 @@
 
                 const accounts = await web3.eth.getAccounts();
 
+                const gasEstimate = await contract.methods.applyForJob(jobId).estimateGas({ from: accounts[0] });
                 await contract.methods.applyForJob(jobId).send({ 
                     from: accounts[0],
-                    gas: 500000,
-                    gasPrice: web3.utils.toWei('20', 'gwei')
+                    gas: Math.floor(gasEstimate * 1.2),
+                    gasPrice: await web3.eth.getGasPrice()
                 });
 
                 alert("Application submitted successfully!");
-
-                // Refresh job list
                 loadJobs();
             } catch (error) {
                 console.error("Error applying for job:", error);
-                alert("Error applying for job: " + (error.message || error));
+                if (error.message.includes("User denied transaction signature")) {
+                    alert("Transaction was rejected. Please try again and confirm the transaction in MetaMask.");
+                } else {
+                    alert("Error applying for job. Please check the console for more details.");
+                }
             } finally {
                 const applyBtn = document.getElementById(`applyBtn-${jobId}`);
                 applyBtn.disabled = false;
