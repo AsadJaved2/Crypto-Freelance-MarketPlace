@@ -13,7 +13,7 @@
             background-color: #f8f9fa; /* Light background color */
         }
         h1 {
-            color: #198754; /* Hero text color */
+            color: #cfd1d0; 
         }
         .card {
             border-radius: 15px; /* Rounded corners for cards */
@@ -236,9 +236,10 @@
                     console.log(`Job ${i}:`, job); // Log the job details to check
 
                     // Check if the job belongs to the buyer and if a freelancer has applied
-                    if (job.isActive && job.freelancer) {
+                    if (job.isActive && job.freelancer&&!job.isApproved) {
                         const notificationCard = document.createElement("div");
                         notificationCard.className = "card notification-card";
+                        notificationCard.id = `job-card-${i}`;
                         notificationCard.innerHTML = `
                             <div class="card-body">
                                 <h5 class="card-title">${job.title}</h5>
@@ -268,6 +269,11 @@
                     await contract.methods.approveJob(jobIndex).send({ from: buyerAddress });
 
                     feedback.innerHTML = `<div class="alert alert-success">Freelancer approved!</div>`;
+
+                    const approvedCard = document.getElementById(`job-card-${jobIndex}`);
+        if (approvedCard) {
+            approvedCard.remove();
+        }
                     // Re-fetch applications after approval
                     await fetchApplications(contract, buyerAddress);
                 } catch (error) {
