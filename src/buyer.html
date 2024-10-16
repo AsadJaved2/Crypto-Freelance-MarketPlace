@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Buyer Profile</title>
@@ -9,220 +9,273 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     />
     <style>
-     body {
-        background-color: #f8f9fa; /* Light background color */
-      }
-      h1 {
-        color: #f8f9fa; /* Dark color for heading */
-      }
-      .card {
-        border-radius: 15px; /* Rounded corners for cards */
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Shadow for cards */
-      }
-      .card-title {
-        color: #007bff; /* Blue color for card titles */
-      }
-      .btn-primary {
-        background-color: #007bff; /* Primary button color */
-        border-color: #007bff; /* Primary button border color */
-      }
-      .btn-primary:hover {
-        background-color: #0056b3; /* Darker blue on hover */
-        border-color: #0056b3; /* Darker border on hover */
-      }
-      .logout-btn {
-        float: right; /* Align logout button to the right */
-        margin-bottom: 20px; /* Space below logout button */
-      }
-      .hero-section {
-        height: 250px; /* Height for hero section */
-        display: flex; /* Flexbox for centering */
-        align-items: center; /* Center vertically */
-        justify-content: center; /* Center horizontally */
-        color: white; /* White text */
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Text shadow for readability */
-        border-radius: 15px; /* Rounded corners for hero section */
-        margin-bottom: 30px; /* Space below hero section */
-      }
-      .hero-text {
-        text-align: center;
-        padding: 20px;
-        background-color: #198754;
-        border-radius: 15px; /* Rounded corners for hero text */
-      }
-      .spinner-border {
-        display: none; /* Initially hidden spinner */
-      }
-    </style>
-  </head>
-
-  <body class="bg-light">
-    <div class="container mt-5">
-      <div class="hero-section">
-        <div class="hero-text">
-          <h1>Welcome to Your Buyer Profile</h1>
-        </div>
-      </div>
-
-      <button class="btn btn-danger mb-3 logout-btn" id="logoutBtn">
-        Logout
-      </button>
-
-      <div class="row">
-        <div class="col-md-5">
-          <div class="card shadow-sm mb-5">
-            <div class="card-body">
-              <h2 class="card-title mb-4">Create Job</h2>
-              <form id="jobForm">
-                <div class="mb-3">
-                  <label for="jobTitle" class="form-label">Project Title</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="jobTitle"
-                    placeholder="Enter job title"
-                    required
-                  />
-                </div>
-                <div class="mb-3">
-                  <label for="jobDescription" class="form-label"
-                    >Project Description</label
-                  >
-                  <textarea
-                    class="form-control"
-                    id="jobDescription"
-                    placeholder="Enter job description"
-                    required
-                  ></textarea>
-                </div>
-                <div class="mb-3">
-                  <label for="jobPayment" class="form-label"
-                    >Project Budget (ether)</label
-                  >
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="jobPayment"
-                    placeholder="Enter payment in Ether"
-                    required
-                    min="0.01"
-                    step="0.01"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  class="btn btn-primary"
-                  id="createJobBtn"
-                >
-                  Create Job
-                </button>
-                <div class="spinner-border text-primary mt-3" id="loadingSpinner" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
-              </form>
-              <div id="feedbackMessage" class="mt-3"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-7 d-flex align-items-center">
-          <div>
-            <h2>Find the Best Freelancers for Your Job</h2>
-            <p>
-              Post a job on our platform and get bids from top freelancers in
-              the field. Manage your project effortlessly and securely through
-              our platform.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- JavaScript to handle job creation and logout -->
-      <script type="module">
-        document.addEventListener("DOMContentLoaded", () => {
-          initApp();
-        });
-
-        async function initApp() {
-          if (typeof window.ethereum !== "undefined") {
-            try {
-              await window.ethereum.request({ method: "eth_requestAccounts" });
-              const web3 = new Web3(window.ethereum);
-
-              const contractAddress = "0x145D90F85212714b94c214109141Ac02E36cD662"; // Your contract address
-              const response = await fetch("./FreelanceMarketplace.json");
-
-              if (!response.ok) {
-                throw new Error("Failed to fetch ABI");
-              }
-              const abiObject = await response.json();
-              const abi = abiObject.abi;
-
-              const contract = new web3.eth.Contract(abi, contractAddress);
-
-              // Handle job creation
-              document
-                .getElementById("jobForm")
-                .addEventListener("submit", async (event) => {
-                  event.preventDefault();
-
-                  const title = document.getElementById("jobTitle").value;
-                  const description = document.getElementById("jobDescription").value;
-                  const payment = document.getElementById("jobPayment").value;
-
-                  const feedback = document.getElementById("feedbackMessage");
-                  const spinner = document.getElementById("loadingSpinner");
-
-                  if (title.trim() === "" || description.trim() === "") {
-                    feedback.innerHTML = `<div class="alert alert-danger">Please fill in all fields</div>`;
-                    return;
-                  }
-
-                  const accounts = await window.ethereum.request({
-                    method: "eth_requestAccounts",
-                  });
-                  const paymentInWei = web3.utils.toWei(payment, "ether");
-
-                  try {
-                    spinner.style.display = "block";
-
-                    console.log("Creating job with title:", title);
-                    console.log("Description:", description);
-                    console.log("Payment in Wei:", paymentInWei);
-
-                    await contract.methods
-                      .createJob(title, description)
-                      .send({
-                        from: accounts[0],
-                        value: paymentInWei,
-                        gas: 500000,
-                      });
-
-                    feedback.innerHTML = `<div class="alert alert-success">Job created successfully!</div>`;
-                    document.getElementById("jobForm").reset();
-                  } catch (error) {
-                    console.error("Error creating job:", error);
-                    feedback.innerHTML = `<div class="alert alert-danger">Error creating job: ${error.message}</div>`;
-                  } finally {
-                    spinner.style.display = "none";
-                  }
-                });
-
-              // Logout button functionality
-              document.getElementById("logoutBtn").onclick = () => {
-                window.location.href = "index.html";
-              };
-            } catch (error) {
-              console.error("MetaMask access denied or other error:", error);
-            }
-          } else {
-            console.error("Please install MetaMask!");
-          }
+        body {
+            background-color: #f8f9fa; /* Light background color */
         }
-      </script>
+        h1 {
+            color: #198754; /* Hero text color */
+        }
+        .card {
+            border-radius: 15px; /* Rounded corners for cards */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Shadow for cards */
+        }
+        .card-title {
+            color: #007bff; /* Blue color for card titles */
+        }
+        .btn-primary {
+            background-color: #007bff; /* Primary button color */
+            border-color: #007bff; /* Primary button border color */
+        }
+        .btn-primary:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+            border-color: #0056b3; /* Darker border on hover */
+        }
+        .logout-btn {
+            float: right; /* Align logout button to the right */
+            margin-bottom: 20px; /* Space below logout button */
+        }
+        .hero-section {
+            height: 250px; /* Height for hero section */
+            display: flex; /* Flexbox for centering */
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+            color: white; /* White text */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Text shadow for readability */
+            background-color: #198754; /* Hero background color */
+            border-radius: 15px; /* Rounded corners for hero section */
+            margin-bottom: 30px; /* Space below hero section */
+        }
+        .spinner-border {
+            display: none; /* Initially hidden spinner */
+        }
+        .notification-card {
+            margin-bottom: 1rem; /* Space between notification cards */
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="hero-section">
+            <h1>Welcome to Your Buyer Profile</h1>
+        </div>
 
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+        <button class="btn btn-danger mb-3 logout-btn" id="logoutBtn">
+            Logout
+        </button>
+
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card shadow-sm mb-5">
+                    <div class="card-body">
+                        <h2 class="card-title mb-4">Create Job</h2>
+                        <form id="jobForm">
+                            <div class="mb-3">
+                                <label for="jobTitle" class="form-label">Project Title</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="jobTitle"
+                                    placeholder="Enter job title"
+                                    required
+                                />
+                            </div>
+                            <div class="mb-3">
+                                <label for="jobDescription" class="form-label">Project Description</label>
+                                <textarea
+                                    class="form-control"
+                                    id="jobDescription"
+                                    placeholder="Enter job description"
+                                    required
+                                ></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="jobPayment" class="form-label">Project Budget (Ether)</label>
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="jobPayment"
+                                    placeholder="Enter payment in Ether"
+                                    required
+                                    min="0.01"
+                                    step="0.01"
+                                />
+                                <div id="paymentError" class="text-danger mt-1"></div>
+                            </div>
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                id="createJobBtn"
+                            >
+                                Create Job
+                            </button>
+                            <div class="spinner-border text-primary mt-3" id="loadingSpinner" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </form>
+                        <div id="feedbackMessage" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <h2>Freelancer Applications</h2>
+                <div id="applicationNotifications"></div>
+            </div>
+        </div>
+
+        <!-- Include Web3.js library -->
+        <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+
+        <!-- JavaScript to handle job creation and logout -->
+        <script type="module">
+            document.addEventListener("DOMContentLoaded", () => {
+                initApp();
+            });
+
+            async function initApp() {
+                let accounts;
+                if (typeof window.ethereum !== "undefined") {
+                    try {
+                        accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+                        const web3 = new Web3(window.ethereum);
+
+                        const contractAddress = '0x017deAf323D439A8a1626bC85bba3eC223ed7aE9'; // Your contract address
+                        const response = await fetch("./FreelanceMarketplace.json");
+
+                        if (!response.ok) {
+                            throw new Error("Failed to fetch ABI");
+                        }
+                        const abiObject = await response.json();
+                        const abi = abiObject.abi;
+
+                        const contract = new web3.eth.Contract(abi, contractAddress);
+
+                        // Handle job creation
+                        document
+                            .getElementById("jobForm")
+                            .addEventListener("submit", async (event) => {
+                                event.preventDefault();
+
+                                const title = document.getElementById("jobTitle").value;
+                                const description = document.getElementById("jobDescription").value;
+                                const payment = document.getElementById("jobPayment").value;
+
+                                const feedback = document.getElementById("feedbackMessage");
+                                const spinner = document.getElementById("loadingSpinner");
+                                const createJobBtn = document.getElementById("createJobBtn");
+                                const paymentError = document.getElementById("paymentError");
+
+                                // Clear previous error messages
+                                paymentError.textContent = '';
+
+                                if (payment < 0.01) {
+                                    paymentError.textContent = "Minimum payment is 0.01 Ether";
+                                    return;
+                                }
+
+                                if (title.trim() === "" || description.trim() === "") {
+                                    feedback.innerHTML = `<div class="alert alert-danger">Please fill in all fields</div>`;
+                                    return;
+                                }
+
+                                const paymentInWei = web3.utils.toWei(payment, "ether");
+
+                                try {
+                                    spinner.style.display = "block";
+                                    createJobBtn.disabled = true;
+
+                                    console.log("Creating job with title:", title);
+                                    console.log("Description:", description);
+                                    console.log("Payment in Wei:", paymentInWei);
+
+                                    await contract.methods
+                                        .createJob(title, description)
+                                        .send({
+                                            from: accounts[0],
+                                            value: paymentInWei,
+                                            gas: 500000,
+                                        });
+
+                                    feedback.innerHTML = `<div class="alert alert-success">Job created successfully!</div>`;
+                                    document.getElementById("jobForm").reset();
+                                } catch (error) {
+                                    console.error("Error creating job:", error);
+                                    feedback.innerHTML = `<div class="alert alert-danger">Error creating job: ${error.message}</div>`;
+                                } finally {
+                                    spinner.style.display = "none";
+                                    createJobBtn.disabled = false;
+                                }
+                            });
+
+                        // Fetch and display application notifications
+                        await fetchApplications(contract, accounts[0]);
+
+                        // Logout button functionality
+                        document.getElementById("logoutBtn").onclick = () => {
+                            window.location.href = "index.html";
+                        };
+                    } catch (error) {
+                        console.error("MetaMask access denied or other error:", error);
+                        alert("Please allow access to MetaMask to proceed.");
+                    }
+                } else {
+                    alert("Please install MetaMask!");
+                }
+            }
+
+            async function fetchApplications(contract, buyerAddress) {
+                const totalJobs = await contract.methods.jobCount().call();
+                const applicationNotifications = document.getElementById("applicationNotifications");
+
+                // Clear the notifications section
+                applicationNotifications.innerHTML = '';
+
+                for (let i = 0; i < totalJobs; i++) {
+                    const job = await contract.methods.getJob(i).call();
+
+                    console.log(`Job ${i}:`, job); // Log the job details to check
+
+                    // Check if the job belongs to the buyer and if a freelancer has applied
+                    if (job.isActive && job.freelancer) {
+                        const notificationCard = document.createElement("div");
+                        notificationCard.className = "card notification-card";
+                        notificationCard.innerHTML = `
+                            <div class="card-body">
+                                <h5 class="card-title">${job.title}</h5>
+                                <p class="card-text">Freelancer: ${job.freelancer}</p>
+                                <button class="btn btn-success approve-btn" data-job-index="${i}">Approve</button>
+                            </div>
+                        `;
+                        applicationNotifications.appendChild(notificationCard);
+                    }
+                }
+
+                // Add event listeners for approval buttons
+                const approveButtons = document.querySelectorAll(".approve-btn");
+                approveButtons.forEach(button => {
+                    button.addEventListener("click", async (event) => {
+                        const jobIndex = event.target.getAttribute("data-job-index");
+                        await approveJob(contract, jobIndex, buyerAddress);
+                    });
+                });
+            }
+
+            async function approveJob(contract, jobIndex, buyerAddress) {
+                const feedback = document.getElementById("feedbackMessage");
+
+                try {
+                  console.log(jobIndex)
+                    await contract.methods.approveJob(jobIndex).send({ from: buyerAddress });
+
+                    feedback.innerHTML = `<div class="alert alert-success">Freelancer approved!</div>`;
+                    // Re-fetch applications after approval
+                    await fetchApplications(contract, buyerAddress);
+                } catch (error) {
+                    console.log("Error approving freelancer:", error);
+                    feedback.innerHTML = `<div class="alert alert-danger">Error approving freelancer: ${error.message}</div>`
+                }
+            }
+        </script>
     </div>
-  </body>
+</body>
 </html>

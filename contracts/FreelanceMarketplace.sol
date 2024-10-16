@@ -16,6 +16,7 @@ contract FreelanceMarketplace {
     Job[] public jobs;
     address public owner;
     mapping(uint256 => uint256) public escrowBalances; // Track escrow balances for each job
+    mapping(uint256 => mapping(address => bool)) public jobApplications; // Track job applications
 
     constructor() {
         owner = msg.sender;
@@ -69,8 +70,10 @@ contract FreelanceMarketplace {
         require(job.isActive, "Job is no longer active");
         require(job.freelancer == address(0), "Job already taken");
         require(msg.sender != job.creator, "Creator cannot apply for their own job");
+        require(!jobApplications[_jobId][msg.sender], "Already applied for this job");
 
-        job.freelancer = payable(msg.sender);
+        job.freelancer = payable(msg.sender); // Assign freelancer to the job
+        jobApplications[_jobId][msg.sender] = true; // Mark as applied
         emit JobApplied(_jobId, msg.sender);
     }
 
@@ -84,8 +87,6 @@ contract FreelanceMarketplace {
 
     function approveJob(uint256 _jobId) public onlyCreator(_jobId) {
         Job storage job = jobs[_jobId];
-        require(job.isComplete, "Job is not yet complete");
-        require(!job.isApproved, "Job already approved");
 
         job.isApproved = true;
         uint256 payment = escrowBalances[_jobId];
@@ -110,12 +111,10 @@ contract FreelanceMarketplace {
         return jobs.length;
     }
 
-    function getJob(uint256 _jobId) public view returns (string memory, string memory, uint256, address, bool, bool, bool) {
-        Job memory job = jobs[_jobId];
-        return (job.title, job.description, job.payment, job.freelancer, job.isComplete, job.isApproved, job.isActive);
-    }
-    
-
+    function getJob(uint256 _jobId) public view returns (Job memory) {
+    require(_jobId < jobs.length, "Job ID does not exist"); // Ensure job ID is valid
+    return jobs[_jobId]; // Return the existing job directly
+}
     function getAppliedJobs() public view returns (uint256[] memory) {
         uint256 appliedJobCount = 0;
         uint256 totalJobs = jobs.length;

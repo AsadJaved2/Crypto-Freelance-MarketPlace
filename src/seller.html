@@ -87,8 +87,7 @@
         let web3;
         let contract;
         let contractABI;
-        const contractAddress = '0x145D90F85212714b94c214109141Ac02E36cD662'; // Your deployed contract address
-        let appliedJobs = [];
+        const contractAddress = '0x017deAf323D439A8a1626bC85bba3eC223ed7aE9'
 
         async function init() {
             if (typeof window.ethereum !== 'undefined') {
@@ -100,7 +99,6 @@
                 alert("Please install MetaMask!");
             }
         }
-
         async function loadJobs() {
     try {
         document.getElementById('loadingSpinner').style.display = 'block';
@@ -116,7 +114,7 @@
 
         const accounts = await web3.eth.getAccounts();
         const appliedJobIDs = await contract.methods.getAppliedJobs().call({ from: accounts[0] });
-        const appliedJobs = appliedJobIDs.map(id => id.toString()); // Store applied job IDs
+        const appliedJobs = new Set(appliedJobIDs.map(id => id.toString())); // Use Set for faster lookup
         console.log("Applied Jobs:", appliedJobs);
 
         // Loop through each job
@@ -126,17 +124,17 @@
                 const job = await contract.methods.getJob(i).call();
                 console.log("Job:", job);
 
-                // Check if the job is available and not already applied for
-                if (!appliedJobs.includes(i.toString()) && job[6]) { // Assuming job[6] indicates availability
+                // Check if the job is active and not already taken
+                if (job.isActive && job.freelancer === '0x0000000000000000000000000000000000000000') { // Check if the freelancer is not assigned
                     const jobDiv = document.createElement('div');
                     jobDiv.className = 'col-md-4 mb-4';
                     jobDiv.id = `job-${i}`;
                     jobDiv.innerHTML = `
                         <div class="card job-card border p-3 h-100">
                             <div class="card-body">
-                                <h5 class="card-title">${job[0]}</h5>
-                                <p class="card-text">${job[1]}</p>
-                                <p>${web3.utils.fromWei(job[2], 'ether')} ETH</p>
+                                <h5 class="card-title">${job.title}</h5>
+                                <p class="card-text">${job.description}</p>
+                                <p>${web3.utils.fromWei(job.payment, 'ether')} ETH</p>
                                 <button class="btn btn-success" id="applyBtn-${i}" onclick="applyForJob(${i})">Apply</button>
                             </div>
                         </div>
@@ -159,6 +157,7 @@
         document.getElementById('loadingSpinner').style.display = 'none'; // Hide spinner
     }
 }
+
 
         async function applyForJob(jobId) {
             try {

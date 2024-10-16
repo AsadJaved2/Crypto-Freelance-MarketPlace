@@ -21,24 +21,24 @@ const JobCard = ({ job, account, contract, loadJobs, onApply, onComplete, onAppr
             <h2>{job.title}</h2>
             <p>{job.description}</p>
             <p>Payment: {Web3.utils.fromWei(job.payment.toString(), 'ether')} ETH</p>
-
-            {isBuyer && !job.completed && (
+    
+            {isBuyer && !job.completed && !job.approved && (
                 <button onClick={handleApprove}>Approve Job</button>
             )}
-
+    
             {isSeller && !job.completed && (
                 <button onClick={handleComplete}>Complete Job</button>
             )}
-
+    
             {job.applied && !job.completed && isSeller && (
                 <p>You have applied for this job.</p>
             )}
-
+    
             {!job.applied && !job.completed && isSeller && (
                 <button onClick={handleApply}>Apply for Job</button>
             )}
         </div>
-    );
+    );    
 };
 
 export default JobCard;
