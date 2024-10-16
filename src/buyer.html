@@ -8,50 +8,133 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     />
-    <style>
-        body {
-            background-color: #f8f9fa; /* Light background color */
-        }
+<style>
+    body {
+        background-color: #0b131b;
+        background: url('./image/bg.jpg') no-repeat center center fixed;
+        background-size: cover;
+        font-family: 'Poppins', sans-serif;
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+    }
+
+    h1 {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 2.8rem;
+        text-align: center;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+        margin-bottom: 40px;
+    }
+
+    /* Card Styles */
+    .card {
+        background-color: rgba(255, 255, 255, 0.12); 
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border: none;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 12px 40px rgba(0, 123, 255, 0.3);
+    }
+
+    .card-title {
+        color: #8bb490;
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+
+    /* Button Styles */
+    .btn-primary, .logout-btn {
+        background-color: #213f30;
+        border-color: #007bff;
+        padding: 12px 25px;
+        font-size: 1.1rem;
+        border-radius: 30px;
+        font-weight: 500;
+        transition: all 0.3s;
+        box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-primary:hover, .logout-btn:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 123, 255, 0.5);
+    }
+
+    /* Align logout button to the right */
+    .logout-btn {
+        float: right;
+        margin-bottom: 20px;
+    }
+
+    /* Hero Section Styles */
+    .hero-section {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 50px 30px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        margin-bottom: 90px;
+    }
+
+    .hero-section h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #52b986;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Spinner Style for Loading */
+    .spinner-border {
+        display: none; 
+        color: #007bff;
+        width: 3rem;
+        height: 3rem;
+    }
+
+    /* Notification Card Styles */
+    .notification-card {
+        margin-bottom: 1rem;
+        background-color: rgba(255, 255, 255, 0.08);
+        border-left: 4px solid #007bff;
+        padding: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        color: #fff;
+    }
+
+    @media (max-width: 768px) {
         h1 {
-            color: #cfd1d0; 
+            font-size: 2.2rem;
         }
+
+        .btn-primary, .logout-btn {
+            font-size: 1rem;
+            padding: 10px 20px;
+        }
+
         .card {
-            border-radius: 15px; /* Rounded corners for cards */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Shadow for cards */
+            padding: 15px;
         }
-        .card-title {
-            color: #007bff; /* Blue color for card titles */
-        }
-        .btn-primary {
-            background-color: #007bff; /* Primary button color */
-            border-color: #007bff; /* Primary button border color */
-        }
-        .btn-primary:hover {
-            background-color: #0056b3; /* Darker blue on hover */
-            border-color: #0056b3; /* Darker border on hover */
-        }
-        .logout-btn {
-            float: right; /* Align logout button to the right */
-            margin-bottom: 20px; /* Space below logout button */
-        }
+
         .hero-section {
-            height: 250px; /* Height for hero section */
-            display: flex; /* Flexbox for centering */
-            align-items: center; /* Center vertically */
-            justify-content: center; /* Center horizontally */
-            color: white; /* White text */
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Text shadow for readability */
-            background-color: #198754; /* Hero background color */
-            border-radius: 15px; /* Rounded corners for hero section */
-            margin-bottom: 30px; /* Space below hero section */
+            padding: 30px 20px;
         }
-        .spinner-border {
-            display: none; /* Initially hidden spinner */
-        }
-        .notification-card {
-            margin-bottom: 1rem; /* Space between notification cards */
-        }
-    </style>
+    }
+</style>
+
 </head>
 <body class="bg-light">
     <div class="container mt-5">
@@ -70,7 +153,7 @@
                         <h2 class="card-title mb-4">Create Job</h2>
                         <form id="jobForm">
                             <div class="mb-3">
-                                <label for="jobTitle" class="form-label">Project Title</label>
+                                <label for="jobTitle" class="text-white">Project Title</label>
                                 <input
                                     type="text"
                                     class="form-control"
@@ -80,7 +163,7 @@
                                 />
                             </div>
                             <div class="mb-3">
-                                <label for="jobDescription" class="form-label">Project Description</label>
+                                <label for="jobDescription" class="text-white">Project Description</label>
                                 <textarea
                                     class="form-control"
                                     id="jobDescription"
@@ -89,7 +172,7 @@
                                 ></textarea>
                             </div>
                             <div class="mb-3">
-                                <label for="jobPayment" class="form-label">Project Budget (Ether)</label>
+                                <label for="jobPayment"  class="text-white">Project Budget (Ether)</label>
                                 <input
                                     type="number"
                                     class="form-control"
@@ -118,8 +201,8 @@
             </div>
 
             <div class="col-md-7">
-                <h2>Freelancer Applications</h2>
-                <div id="applicationNotifications"></div>
+                <h2 class="text-white">Freelancer Applications</h2>
+                <div id="applicationNotifications" class="row g-4"></div>
             </div>
         </div>
 
