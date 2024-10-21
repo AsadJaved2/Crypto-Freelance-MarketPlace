@@ -84,7 +84,7 @@ contract FreelanceMarketplace {
         job.isComplete = true;
         emit JobCompleted(_jobId, msg.sender);
     }
-
+    
     function approveJob(uint256 _jobId) public onlyCreator(_jobId) {
         Job storage job = jobs[_jobId];
 

@@ -125,7 +125,7 @@ const App = () => {
     };
 
     if (loading) {
-        return <div className="text-center">Loading...</div>; // Center loading message
+        return <div className="text-center">Loading...</div>; 
     }
 
     return (
